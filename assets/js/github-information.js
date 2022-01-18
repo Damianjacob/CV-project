@@ -15,6 +15,27 @@ function userInformationHTML(user){
 
 }
 
+function repoInformationHTML(repos){
+    if (repos.length == 0){
+        return `<div class="clearfix repo-list">No repos!</div>`
+    }
+
+    var listItemsHTML = repos.map(function(repo){
+        return `<li>
+                    <a href="${repo.html_url}" target="_blank">${repo.name}</a>
+                </li>`;
+    });
+
+    return `<div class="clearfix repo-list">
+                <p>
+                    <strong>Repo List:</strong>          
+                </p>
+                <ul>
+                    ${listItemsHTML.join("\n")}
+                </ul>
+            </div>`
+}
+
 function fetchGitHubInformation(event){
 
     var username = $("#gh-username").val();
@@ -29,11 +50,20 @@ function fetchGitHubInformation(event){
         </div>`);
 
     $.when(
-        $.getJSON(`https://api.github.com/users/${username}`)
+        // getJSON: Load JSON-encoded data from the server using a GET HTTP request.
+
+        $.getJSON(`https://api.github.com/users/${username}`),
+        $.getJSON(`https://api.github.com/users/${username}/repos`)
     ).then(
-        function(response){
-            var userData = response;
+        function(firstResponse, secondResponse){
+            // firstResponse and secondResponse are the responses to the getJSON requests.
+            // The when method packs a response up into arrays and each response is the first element of the array
+            //  so we need to index firstResponse and secondResponse. Edit: It's the Github API that
+            // packs the response up in an array, not the when method itself
+            var userData = firstResponse[0];
+            var repoData = secondResponse[0];
             $("#gh-user-data").html(userInformationHTML(userData));
+            $("#gh-repo-data").html(repoInformationHTML(repoData));
         }, function(errorResponse){
             if (errorResponse.status === 404) {
                 $("#gh-user-data").html(`<h2>No info found for user ${username}<h2>`)
